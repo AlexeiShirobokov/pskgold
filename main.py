@@ -65,7 +65,7 @@ class MyWindow(QtWidgets.QWidget):
 
         self.save_button = QtWidgets.QPushButton('Сохранить в Excel')
         form_layout.addRow(self.save_button)
-        self.save_button.clicked.connect(self.save_to_excel)
+        self.save_button.clicked.connect(self.save_to_dataframe)
 
     def on_submit_clicked(self):
         mark = self.mark_edit.text()
@@ -90,10 +90,16 @@ class MyWindow(QtWidgets.QWidget):
         else:
             QtWidgets.QMessageBox.warning(self, 'Ошибка', f'Неверный номер ТО для выбранной марки техники "{mark}"')
 
-    def save_to_excel(self):
+    def save_to_dataframe(self):
         # Получение данных из таблицы
+        df_TO = pd.read_excel(os.path.join(current_dir, 'Результаты ТО.xlsx'), "Sheet1")
         rows = self.result_table.rowCount()
         cols = self.result_table.columnCount()
+
+        # Создание пустого dataframe
+        df = pd.DataFrame(columns=['Дата', 'Марка техники', 'Машиночасы', 'Номер ТО', 'Инвентарный номер', 'Работы',
+                                   'Количество план', 'Количество факт'])
+
 
         # Получение вводных данных
         date = self.date_edit.text()
@@ -103,7 +109,7 @@ class MyWindow(QtWidgets.QWidget):
         inventory_number = self.inventory_edit.text()
 
         # Получение данных о проделанных работах
-        data = []
+        #data = []
         for row in range(rows):
             row_data = []
             for col in range(cols):
@@ -120,56 +126,19 @@ class MyWindow(QtWidgets.QWidget):
                             row_data.append('')
                     else:
                         row_data.append('')
-            data.append(row_data)
-
-            # Сохранение данных в Excel
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Результаты ТО"
-
-        # Вставка заголовка таблицы
-        header = ['Дата', 'Марка техники', 'Машиночасы', 'Номер ТО', 'Инвентарный номер', 'Работы', 'Количество план',
-                  'Количество факт']
-        ws.append(header)
-
-        # Вставка вводных данных
-        input_data = [date, mark, hours, to_number, inventory_number]
-        for i in range(len(data)):
-            ws.append(input_data + data[i])
-
-        wb.save('Результаты ТО.xlsx')
+            #data.append(row_data)
+            # Вставка заголовка таблицы
+            row_data = [date, mark, hours, to_number, inventory_number] + row_data[0:3] + row_data[4:6] + row_data[3:4]
+            df.loc[row] = row_data
 
 
+        # Вывод dataframe в консоль
+        print(df, df_TO)
+        dfmer = pd.concat([df_TO, df], axis=0)
+        #dfmer = pd.merge(df, df_TO, on='Инвентарный номер', how='outer')
+        dfmer.to_excel(os.path.join(current_dir, 'Результаты ТО.xlsx'), index=False)
 
-'''
-        for row in range(rows):
-            row_data = []
-            for col in range(cols):
-                item = self.result_table.item(row, col)
-                if item is not None:
-                    row_data.append(item.text())
-                else:
-                    row_data.append('')
-            data.append(row_data)'''
-'''
-        # Сохранение данных в Excel
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Результаты ТО"
-
-        # Вставка заголовка таблицы
-        header = ['Дата', 'Марка техники', 'Машиночасы', 'Номер ТО', 'Инвентарный номер', 'Работы', 'Количество план',
-                  'Количество факт']
-        ws.append(header)
-
-        # Вставка вводных данных
-        input_data = [date, mark, hours, to_number, inventory_number]
-        for i in range(len(data)):
-            ws.append(input_data + data[i])
-
-        wb.save('Результаты ТО.xlsx')'''
-
-
+        #df.to_excel('C:/Users/poisk-12/YandexDisk-shirobokov@pskgold.ru/$Разработки/Pyqt/Результаты ТО.xlsx', "Sheet1"), index=False)
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     window = MyWindow()

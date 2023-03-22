@@ -92,6 +92,7 @@ class MyWindow(QtWidgets.QWidget):
 
     def save_to_dataframe(self):
         # Получение данных из таблицы
+        df_TO = pd.read_excel(os.path.join(current_dir, 'Результаты ТО.xlsx'), "Sheet1")
         rows = self.result_table.rowCount()
         cols = self.result_table.columnCount()
 
@@ -130,13 +131,14 @@ class MyWindow(QtWidgets.QWidget):
             row_data = [date, mark, hours, to_number, inventory_number] + row_data[0:3] + row_data[4:6] + row_data[3:4]
             df.loc[row] = row_data
 
-            # Вставка заголовка таблицы
-            header = ['Дата', 'Марка техники', 'Машиночасы', 'Номер ТО', 'Инвентарный номер', 'Работы',
-                      'Количество план',
-                      'Количество факт']
-        # Вывод dataframe в консоль
-        print(df)
 
+        # Вывод dataframe в консоль
+        print(df, df_TO)
+        dfmer = pd.concat([df_TO, df], axis=0)
+        #dfmer = pd.merge(df, df_TO, on='Инвентарный номер', how='outer')
+        dfmer.to_excel(os.path.join(current_dir, 'Результаты ТО.xlsx'), index=False)
+
+        #df.to_excel('C:/Users/poisk-12/YandexDisk-shirobokov@pskgold.ru/$Разработки/Pyqt/Результаты ТО.xlsx', "Sheet1"), index=False)
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     window = MyWindow()

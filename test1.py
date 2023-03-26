@@ -30,28 +30,37 @@ class MyWindow(QtWidgets.QWidget):
         # добавляем виджеты на форму
         self.date_label = QtWidgets.QLabel('Дата:')
         self.date_edit = QtWidgets.QLineEdit()
-        self.hours_label = QtWidgets.QLabel('Машиночасы:')
-        self.hours_edit = QtWidgets.QLineEdit()
+        self.department_label = QtWidgets.QLabel('Подразделение:')
+        self.department_edit = QtWidgets.QLineEdit()
         self.mark_label = QtWidgets.QLabel('Марка техники:')
         self.mark_edit = QtWidgets.QLineEdit()
         self.inventory_label = QtWidgets.QLabel('Инвентарный номер:')
         self.inventory_edit = QtWidgets.QLineEdit()
+        self.hours_label = QtWidgets.QLabel('Машиночасы:')
+        self.hours_edit = QtWidgets.QLineEdit()
         self.to_label = QtWidgets.QLabel('Номер ТО:')
         self.to_edit = QtWidgets.QLineEdit()
+
+
+        self.responsible_label = QtWidgets.QLabel('ФИО ответственного:')
+        self.responsible_edit = QtWidgets.QLineEdit()
+
         self.submit_button = QtWidgets.QPushButton('Отправить')
 
         # добавляем таблицу для вывода результатов
         self.result_table = QtWidgets.QTableWidget()
         self.result_table.setColumnCount(3)
-        self.result_table.setHorizontalHeaderLabels(['Работы', 'Количество план', 'Количество факт'])
+        self.result_table.setHorizontalHeaderLabels(['Выполненые работы', 'Группа деталей', 'Кат. №', 'Детали', 'Количество план', 'Количество факт'])
 
         # размещаем виджеты на форме
         form_layout = QtWidgets.QFormLayout()
         form_layout.addRow(self.date_label, self.date_edit)
-        form_layout.addRow(self.hours_label, self.hours_edit)
+        form_layout.addRow(self.department_label, self.department_edit)
         form_layout.addRow(self.mark_label, self.mark_edit)
         form_layout.addRow(self.inventory_label, self.inventory_edit)
+        form_layout.addRow(self.hours_label, self.hours_edit)
         form_layout.addRow(self.to_label, self.to_edit)
+        form_layout.addRow(self.responsible_label, self.responsible_edit)
         form_layout.addWidget(self.submit_button)
 
         main_layout = QtWidgets.QVBoxLayout()
@@ -63,7 +72,7 @@ class MyWindow(QtWidgets.QWidget):
         # связываем сигнал нажатия кнопки с методом on_submit_clicked
         self.submit_button.clicked.connect(self.on_submit_clicked)
 
-        self.save_button = QtWidgets.QPushButton('Сохранить в Excel')
+        self.save_button = QtWidgets.QPushButton('Сохранить')
         form_layout.addRow(self.save_button)
         self.save_button.clicked.connect(self.save_to_dataframe)
 
@@ -76,17 +85,23 @@ class MyWindow(QtWidgets.QWidget):
 
         if not data.empty:
             # задаем данные для таблицы
+            vipols = data['Выполненые работы'].tolist()
+            grups = data['Группа деталей'].tolist()
+            artics = data['Кат. №'].tolist()
             works = data['Наименование'].tolist()
             amounts = data['Кол-во'].tolist()
 
             self.result_table.setRowCount(len(works))
 
-            for i, (work, amount) in enumerate(zip(works, amounts)):
-                self.result_table.setItem(i, 0, QtWidgets.QTableWidgetItem(work))
-                self.result_table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(amount)))
+            for i, (vipol, grup, artic, work, amount) in enumerate(zip(vipols, grups, artics, works, amounts)):
+                self.result_table.setItem(i, 0, QtWidgets.QTableWidgetItem(str(vipol)))
+                self.result_table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(grup)))
+                self.result_table.setItem(i, 2, QtWidgets.QTableWidgetItem(str(artic)))
+                self.result_table.setItem(i, 3, QtWidgets.QTableWidgetItem(str(work)))
+                self.result_table.setItem(i, 4, QtWidgets.QTableWidgetItem(str(amount)))
 
                 edit = QtWidgets.QLineEdit()
-                self.result_table.setCellWidget(i, 2, edit)
+                self.result_table.setCellWidget(i, 5, edit)
         else:
             QtWidgets.QMessageBox.warning(self, 'Ошибка', f'Неверный номер ТО для выбранной марки техники "{mark}"')
 
@@ -97,8 +112,8 @@ class MyWindow(QtWidgets.QWidget):
         cols = self.result_table.columnCount()
 
         # Создание пустого dataframe
-        df = pd.DataFrame(columns=['Дата', 'Марка техники', 'Машиночасы', 'Номер ТО', 'Инвентарный номер', 'Работы',
-                                   'Количество план', 'Количество факт'])
+        df = pd.DataFrame(columns=['Дата', 'Марка техники', 'Машиночасы', 'Номер ТО', 'Инвентарный номер', 'Подразделение', 'ФИО ответственного', 'Детали', 'Количество план', 'Количество факт'])
+
 
 
         # Получение вводных данных
@@ -106,6 +121,8 @@ class MyWindow(QtWidgets.QWidget):
         mark = self.mark_edit.text()
         hours = self.hours_edit.text()
         to_number = self.to_edit.text()
+        department = self.department_edit.text()
+        responsible = self.responsible_edit.text()
         inventory_number = self.inventory_edit.text()
 
         # Получение данных о проделанных работах
@@ -118,7 +135,7 @@ class MyWindow(QtWidgets.QWidget):
                     row_data.append(item.text())
                 else:
                     # Если это столбец "Количество факт", то добавляем значение из поля ввода
-                    if col == 2:
+                    if col == 5:
                         edit = self.result_table.cellWidget(row, col)
                         if isinstance(edit, QtWidgets.QLineEdit):
                             row_data.append(edit.text())
@@ -128,17 +145,15 @@ class MyWindow(QtWidgets.QWidget):
                         row_data.append('')
             #data.append(row_data)
             # Вставка заголовка таблицы
-            row_data = [date, mark, hours, to_number, inventory_number] + row_data[0:3] + row_data[4:6] + row_data[3:4]
+            row_data = [date, mark, hours, to_number,  inventory_number, department,  responsible] + row_data[0:5]
+
             df.loc[row] = row_data
 
-
         # Вывод dataframe в консоль
-        print(df, df_TO)
+        #print(df_TO)
         dfmer = pd.concat([df_TO, df], axis=0)
-        #dfmer = pd.merge(df, df_TO, on='Инвентарный номер', how='outer')
         dfmer.to_excel(os.path.join(current_dir, 'Результаты ТО.xlsx'), index=False)
 
-        #df.to_excel('C:/Users/poisk-12/YandexDisk-shirobokov@pskgold.ru/$Разработки/Pyqt/Результаты ТО.xlsx', "Sheet1"), index=False)
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
     window = MyWindow()

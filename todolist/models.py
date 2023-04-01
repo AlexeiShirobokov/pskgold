@@ -28,30 +28,22 @@ class TodoList(models.Model):
     def __str__(self):
         return self.title
 
-#создадим пользователей с должностями
+import os
+import pandas as pd
+df = pd.read_excel(os.path.join('Excel_dir', 'Регламент_инструкции.xlsx'), "Регламент")
+df1 = pd.read_excel(os.path.join('Excel_dir', 'Регламент_инструкции.xlsx'), "Артикулы")
+#df2 = pd.read_excel(os.path.join('Excel_dir', 'Регламент_инструкции.xlsx'), "Тип обслуживания")
+#df3 = pd.read_excel(os.path.join('Excel_dir', 'Календарный План ТО_2023.xlsx'), "Календарь ТО")
 
-class Position(models.Model):
-    name = models.CharField(max_length=50)
+####работа с
+class MyModel(models.Model):
+    brand = models.CharField(max_length=100)
+    inventory_number = models.IntegerField()
 
-# Определите модель для пользователей, которая будет связана с моделью должности:
-from django.contrib.auth.models import User
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True)
-
-#Создайте несколько должностей и сохраните их в базе данных:
-position1 = Position(name='Механик')
-position1.save()
-
-position2 = Position(name='Главный механик')
-position2.save()
-
-#Создайте несколько пользователей и добавьте им должность:
-user1 = User.objects.create_user(username='user1', password='password1')
-user_profile1 = UserProfile(user=user1, position=position1)
-user_profile1.save()
-
-user2 = User.objects.create_user(username='user2', password='password2')
-user_profile2 = UserProfile(user=user2, position=position2)
-user_profile2.save()
+    @staticmethod
+    def create_from_dataframe(df):
+        for index, row in df.iterrows():
+            MyModel.objects.create(
+                brand=row['brand'],
+                inventory_number=row['inventory_number']
+            )

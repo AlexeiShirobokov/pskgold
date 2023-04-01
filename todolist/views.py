@@ -42,3 +42,26 @@ def category(request):
                 except BaseException:
                     return HttpResponse('<h1>Сначала удалите карточки с этими категориями)</h1>')
     return render(request, "category.html", {"categories": categories})
+
+
+###работа с ТО
+from django.shortcuts import render
+from .models import MyModel
+
+def equipment_list(request):
+    if request.method == 'POST':
+        brand = request.POST['brand']
+        inventory_number = request.POST['inventory_number']
+        queryset = MyModel.objects.filter(
+            brand__icontains=brand,
+            inventory_number__icontains=inventory_number,
+        )
+    else:
+        queryset = MyModel.objects.all()
+
+    context = {
+        'object_list': queryset,
+    }
+    return render(request, 'myapp/MyModel.html', context)
+
+

@@ -45,23 +45,49 @@ def category(request):
 
 
 ###работа с ТО
+import pandas as pd
 from django.shortcuts import render
 from .models import MyModel
 
 def equipment_list(request):
     if request.method == 'POST':
-        brand = request.POST['brand']
-        inventory_number = request.POST['inventory_number']
-        queryset = MyModel.objects.filter(
-            brand__icontains=brand,
-            inventory_number__icontains=inventory_number,
-        )
+        brand = request.POST.get('brand', '')
+        inventory_number = request.POST.get('inventory_number', '')
+        quantity = request.POST.get('quantity', '')  # получаем значение кол-ва факт
+
+        if 'action' in request.POST and request.POST['action'] == 'send': # проверяем, что была нажата кнопка "Передать"
+            # Добавить код для передачи данных другому пользователю
+            pass
+        df = pd.read_excel('Excel_dir/Регламент_инструкции.xlsx', sheet_name='Регламент')
+        print(df.head())  # проверяем, что данные загрузились корректно
+
+        # проверяем, что имена столбцов соответствуют ожидаемым
+        print(df.columns)
+
+        # фильтруем DataFrame
+        queryset = df[(df['Марка техники'] == brand) & (df['Вид ТО'] == inventory_number)]
+        print(queryset.head())  # проверяем, что фильтрация прошла корректно
+        queryset['Кол-во факт'] = quantity  # добавляем колонку с кол-вом факт
+        print(queryset.head())  # проверяем, что фильтрация прошла корректно
     else:
-        queryset = MyModel.objects.all()
+        queryset = pd.DataFrame()
 
     context = {
-        'object_list': queryset,
+        'object_list': queryset.to_dict(orient='records'),
     }
-    return render(request, 'myapp/MyModel.html', context)
+    return render(request, 'MyModel.html', context)
 
+from django.shortcuts import render
+from django.views.generic.edit import CreateView
+from django.urls import reverse_lazy
+from .models import Request
 
+class RequestCreateView(CreateView):
+    model = Request
+    fields = ['title', 'description', 'created_by']
+    template_name = 'request_create.html'
+    success_url = reverse_lazy('request_created')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)

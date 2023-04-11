@@ -19,13 +19,14 @@ from django.contrib import admin
 from todolist.views import todo
 from todolist.views import category
 from todolist.views import redirect_view
+from todolist.views import equipment_list
 
 urlpatterns = [
     re_path(r'^$', redirect_view),
     re_path(r'^admin/', admin.site.urls),
     re_path(r'^todo/$', todo, name="TodoList"),
     re_path(r'^category/$', category, name="Category"),
-
+    re_path(r'^My_model/$', equipment_list, name="My_model"),
 ]
 
 

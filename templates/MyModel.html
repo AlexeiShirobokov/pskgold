@@ -1,0 +1,60 @@
+<!-- MyModel.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/my_styles.css' %}">
+{% endblock %}
+
+{% block content %}
+  <form method="post">
+    {% csrf_token %}
+    <label for="Марка техники">Марка техники:</label>
+    <input type="text" name="brand" value="{{ request.POST.brand }}"><br>
+
+    <label for="Вид ТО">Вид ТО:</label>
+    <input type="text" name="inventory_number" value="{{ request.POST.inventory_number }}"><br>
+
+    <button type="submit">Показать список</button>
+    <button type="submit" name="action" value="send">Передать</button>
+  </form>
+
+  {% if object_list %}
+    <table>
+      <thead>
+        <tr>
+          <th>Марка техники</th>
+          <th>Тип техники</th>
+          <th>Вид ТО</th>
+          <th>Выполненные работы</th>
+          <th>Группа деталей</th>
+          <th>Наименование</th>
+          <th>Кат. №</th>
+          <th>Ед. изм.</th>
+          <th>Кол-во</th>
+          <th>Кол-во факт</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obj in object_list %}
+          <tr>
+            {% for key, value in obj.items %}
+              <td>{{ value }}</td>
+            {% endfor %}
+            <td><input type="text" name="quantity" value="{{ obj.quantity }}"></td> <!-- поле для ввода кол-ва факт -->
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="10">Нет данных</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+{% endblock %}
+
+
+<!-- Добавляем стили в отдельном файле -->
+{% block styles %}
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% endblock %}

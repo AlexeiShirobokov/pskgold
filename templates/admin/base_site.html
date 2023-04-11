@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <!-- добавляем стили для ссылки на форму -->
+  <style>
+    .add-request-link {
+      display: inline-block;
+      padding: 5px;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: #fff;
+      text-decoration: none;
+    }
+  </style>
+{% endblock %}
+
+{% block nav-global %}
+  {{ block.super }}
+  {% if user.groups.filter(name_exact='Mechanics').exists %}
+
+    <li>
+      <a class="add-request-link" href="{% url 'admin:request_create' %}">
+        Создать заявку
+      </a>
+    </li>
+  {% endif %}
+{% endblock %}

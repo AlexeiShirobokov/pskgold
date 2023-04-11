@@ -34,16 +34,43 @@ df = pd.read_excel(os.path.join('Excel_dir', 'Регламент_инструк�
 df1 = pd.read_excel(os.path.join('Excel_dir', 'Регламент_инструкции.xlsx'), "Артикулы")
 #df2 = pd.read_excel(os.path.join('Excel_dir', 'Регламент_инструкции.xlsx'), "Тип обслуживания")
 #df3 = pd.read_excel(os.path.join('Excel_dir', 'Календарный План ТО_2023.xlsx'), "Календарь ТО")
-
+print(df)
 ####работа с
 class MyModel(models.Model):
     brand = models.CharField(max_length=100)
-    inventory_number = models.IntegerField()
-
-    @staticmethod
-    def create_from_dataframe(df):
-        for index, row in df.iterrows():
-            MyModel.objects.create(
-                brand=row['brand'],
-                inventory_number=row['inventory_number']
+    inventory_number = models.CharField(max_length=100)
+    quantity = models.IntegerField(default=0)
+    @classmethod
+    def create_from_dataframe(cls, df):
+        for _, row in df.iterrows():
+            cls.objects.create(
+                brand=row['Марка техники'],
+                inventory_number=row['Вид ТО']
             )
+
+    def __str__(self):
+        return f"{self.brand}, {self.inventory_number}"
+
+
+from django.db import models
+from django.contrib.auth.models import User, Group
+
+
+#заявка
+class Request(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_by = models.ForeignKey(User, null=True, blank=True, related_name='processed_requests', on_delete=models.CASCADE)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+class Detail(models.Model):
+    name = models.CharField(max_length=255)
+    quantity = models.IntegerField()
+    requested_by = models.ForeignKey(User, related_name='requested_details', on_delete=models.CASCADE)
+    processed_by = models.ForeignKey(User, null=True, blank=True, related_name='processed_details', on_delete=models.CASCADE)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+class CustomUser(User):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
